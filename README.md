@@ -1,5 +1,7 @@
 # Storeez Batch Pipeline POC
 
+![Architecture Diagram](images/arch_diagram.png)
+
 ## Summary
 Storeez aims to improve user engagement and content discovery across its platform. This project focuses on building a scalable batch data pipeline to process and integrate various data sources, enabling business teams to get user engagement insights for personalized content recommendations
 
