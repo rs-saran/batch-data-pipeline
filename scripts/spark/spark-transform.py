@@ -1,14 +1,10 @@
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, StringType, BinaryType, MapType, TimestampType
-import boto3
 import sys
 from delta.tables import DeltaTable
 
-# Initialize Spark Session
-spark = SparkSession.builder \
-    .appName("Flatten Parquet") \
-    .getOrCreate()
+
 
 def flatten_schema(df):
     """
@@ -38,7 +34,7 @@ def flatten_schema(df):
 
 
 
-def main(event_name="consumption_end", event_date="2023/10/1"):
+def main(spark,event_name="consumption_end", event_date="2023/10/1"):
     print("\n\n----------------------MAIN-----------------------\n\n")
     schema = StructType([
                 StructField("event_name", StringType(), True),
@@ -87,8 +83,39 @@ if __name__ == "__main__":
     print(sys.argv)
 
     event_name = sys.argv[1]
-    event_date = sys.argv[2].replace("-","/")
+    event_date = sys.argv[2].replace("-","/").replace("/0","/")
 
-    main(event_name,event_date)
+    # Initialize Spark Session
+    spark = (
+            
+            SparkSession.builder \
+            .appName("clickstream_event-data-processing-spark") \
+            .config(
+            "spark.jars.packages",
+            "org.apache.hadoop:hadoop-client:3.3.4,org.apache.hadoop:hadoop-aws:3.3.4,io.delta:delta-spark_2.12:3.1.0",
+            ) \
+            .config("spark.sql.extensions","io.delta.sql.DeltaSparkSessionExtension") \
+            .config("spark.sql.catalog.spark_catalog","org.apache.spark.sql.delta.catalog.DeltaCatalog") \
+            .config("spark.hadoop.fs.s3a.access.key", "minio") \
+            .config("spark.hadoop.fs.s3a.secret.key", "minio123") \
+            .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000") \
+            .config("spark.hadoop.fs.s3a.region", "us-east-1") \
+            .config(
+            "spark.hadoop.fs.s3a.impl",
+            "org.apache.hadoop.fs.s3a.S3AFileSystem",
+             ) \
+            .config("spark.hadoop.fs.s3a.path.style.access", "true")
+            
+            .getOrCreate()
+        )
+
+    
+    print("Spark version:", spark.version)
+    print("Hadoop S3A implementation:", spark._jsc.hadoopConfiguration().get("fs.s3a.impl"))
+    print("S3A access key:", spark._jsc.hadoopConfiguration().get("fs.s3a.access.key"))
+    print(spark.sparkContext._jvm.org.apache.spark.SparkFiles.getRootDirectory())
+
+
+    main(spark,event_name,event_date)
 
     spark.stop()

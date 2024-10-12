@@ -1,4 +1,0 @@
-boto3
-delta-spark
-notebook
-jupyter-server
