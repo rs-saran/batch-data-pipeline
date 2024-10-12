@@ -87,7 +87,7 @@ if __name__ == "__main__":
     print(sys.argv)
 
     event_name = sys.argv[1]
-    event_date = sys.argv[2]
+    event_date = sys.argv[2].replace("-","/")
 
     main(event_name,event_date)
 
